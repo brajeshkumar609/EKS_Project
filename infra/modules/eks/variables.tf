@@ -1,35 +1,46 @@
+#############################################
+# EKS Module - Variables
+#############################################
+
 variable "cluster_name" {
-  type    = string
-  default = "prod-eks"
+  description = "EKS cluster name."
+  type        = string
+  default     = "prod-eks"
 }
 
 variable "kubernetes_version" {
-  type    = string
-  default = "1.29"
+  description = "Kubernetes version for the cluster."
+  type        = string
+  default     = "1.29"
 }
 
 variable "vpc_id" {
-  type    = string
-  default = "" # fill with module.vpc.vpc_id in stack
+  description = "VPC ID where EKS will be created."
+  type        = string
+  default     = "" # Pass from VPC module in the stack.
 }
 
 variable "private_subnet_ids" {
-  type    = list(string)
-  default = [] # fill with module.vpc.private_subnets in stack
+  description = "Private subnet IDs for the EKS control plane and nodes."
+  type        = list(string)
+  default     = [] # Pass from VPC module in the stack.
 }
 
 variable "kms_key_arn" {
-  type    = string
-  default = "" # optional; leave empty to skip secrets encryption
+  description = "Optional KMS key ARN for secrets encryption. Leave empty to disable."
+  type        = string
+  default     = ""
 }
 
 variable "admin_role_arn" {
-  type    = string
-  default = "" # map your IAM admin role; empty means no extra aws-auth mappings
+  description = "Optional IAM role ARN to grant cluster-admin via access entries."
+  type        = string
+  default     = ""
 }
 
 variable "tags" {
-  type    = map(string)
+  description = "Common tags for EKS resources."
+  type        = map(string)
   default = {
     Environment = "prod"
     Platform    = "eks"
