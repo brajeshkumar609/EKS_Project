@@ -1,0 +1,5 @@
+resources:
+  - ../../namespaces/demo-namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  # - ingress.yaml   # uncomment if you want ALB Ingress
