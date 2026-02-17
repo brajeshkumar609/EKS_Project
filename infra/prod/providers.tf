@@ -1,6 +1,6 @@
 terraform {
   # Allow any Terraform 1.x version (works with your 1.14.5)
-  required_version = ">= 1.0, < 2.0"
+  required_version = ">= 1.3.0"
 
   required_providers {
     aws        = { source = "hashicorp/aws", version = "~> 5.0" }
