@@ -8,26 +8,25 @@ module "eks" {
   vpc_id     = var.vpc_id
   subnet_ids = var.private_subnet_ids
 
-  # Private endpoint; you're running from an EC2 in the VPC
+  # Private endpoint; you are running from an EC2 in the VPC
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = false
 
   enable_irsa = true
 
-  # --- Minimal cost: disable KMS (enable later if required)
-  create_kms_key            = false
-  
-  cluster_encryption_config = var.kms_key_arn != "" ? {
+  # ----- KMS / Secrets Encryption -----
+  create_kms_key = false
+  # IMPORTANT: the module expects a LIST. [] disables encryption.
+  cluster_encryption_config = var.kms_key_arn != "" ? [{
     resources        = ["secrets"]
     provider_key_arn = var.kms_key_arn
-  } : {}
+  }] : []
 
-
-  # Logs (low cost)
+  # Logs
   cluster_enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   cloudwatch_log_group_retention_in_days = 30
 
-  # One small node
+  # One small node (low cost)
   eks_managed_node_groups = {
     general = {
       min_size       = 1
@@ -39,14 +38,14 @@ module "eks" {
     }
   }
 
-  # v20+ AWS Auth
+  # v20+ auth management
   enable_cluster_creator_admin_permissions = true
 
   access_entries = length(var.admin_role_arn) > 0 ? {
     admin = {
       principal_arn = var.admin_role_arn
       policy_associations = [{
-        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+        policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
         access_scope = { type = "cluster", namespaces = null }
       }]
       kubernetes_groups = ["system:masters"]
@@ -55,4 +54,3 @@ module "eks" {
 
   tags = var.tags
 }
-
