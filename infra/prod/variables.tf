@@ -1,9 +1,15 @@
+#############################################
+# Prod Stack - Variables
+#############################################
+
 variable "cluster_name" {
-  type    = string
-  default = "prod-eks"
+  description = "EKS cluster name for the prod environment."
+  type        = string
+  default     = "prod-eks"
 }
 
 variable "kubernetes_version" {
-  type    = string
-  default = "1.29"
+  description = "Kubernetes version for the prod EKS cluster."
+  type        = string
+  default     = "1.29"
 }
