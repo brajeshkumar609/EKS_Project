@@ -1,10 +1,9 @@
 terraform {
   backend "s3" {
-    bucket         = "tfstate-prod-yourorg"
-    key            = "eks/prod/terraform.tfstate"
-    region         = "ap-south-1"
-    dynamodb_table = "tfstate-locks"
-    encrypt        = true
-    kms_key_id     = "alias/tfstate-sse-kms"
+    bucket       = "tfstate-brajesh-prod" # create once (unique name)
+    key          = "envs/prod/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true # S3 lockfile; DynamoDB locking is deprecated
   }
 }
