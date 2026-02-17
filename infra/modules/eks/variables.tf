@@ -1,7 +1,24 @@
-variable "cluster_name"        { type = string }
-variable "kubernetes_version"  { type = string }
-variable "vpc_id"              { type = string }
-variable "private_subnet_ids"  { type = list(string) }
-variable "kms_key_arn"         { type = string }
-variable "admin_role_arn"      { type = string }
-variable "tags"                { type = map(string) default = {} }
+variable "name" {
+  type = string
+}
+
+variable "cidr" {
+  type = string
+}
+
+variable "azs" {
+  type = list(string)
+}
+
+variable "public_subnets" {
+  type = list(string)
+}
+
+variable "private_subnets" {
+  type = list(string)
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}
