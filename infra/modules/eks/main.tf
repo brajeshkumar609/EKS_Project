@@ -16,7 +16,12 @@ module "eks" {
 
   # --- Minimal cost: disable KMS (enable later if required)
   create_kms_key            = false
-  cluster_encryption_config = null
+  
+  cluster_encryption_config = var.kms_key_arn != "" ? {
+    resources        = ["secrets"]
+    provider_key_arn = var.kms_key_arn
+  } : {}
+
 
   # Logs (low cost)
   cluster_enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
