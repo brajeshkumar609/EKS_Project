@@ -1,5 +1,7 @@
 terraform {
-  required_version = "~> 1.3.0"
+  # Allow any Terraform 1.x version (works with your 1.14.5)
+  required_version = ">= 1.0, < 2.0"
+
   required_providers {
     aws        = { source = "hashicorp/aws", version = "~> 5.0" }
     kubernetes = { source = "hashicorp/kubernetes", version = "~> 2.29" }
@@ -12,10 +14,11 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# These providers will be configured after cluster is created
+# These will be valid *after* the cluster exists—using try(...) avoids init-time evaluation errors
 data "aws_eks_cluster" "this" {
   name = module.eks.cluster_name
 }
+
 data "aws_eks_cluster_auth" "this" {
   name = module.eks.cluster_name
 }
