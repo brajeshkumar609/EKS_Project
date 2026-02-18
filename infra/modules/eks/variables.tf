@@ -17,13 +17,13 @@ variable "kubernetes_version" {
 variable "vpc_id" {
   description = "VPC ID where EKS will be created."
   type        = string
-  default     = "" # Pass from VPC module in the stack.
+  default     = "" # Pass from VPC module at the stack layer.
 }
 
 variable "private_subnet_ids" {
-  description = "Private subnet IDs for the EKS control plane and nodes."
+  description = "Private subnet IDs used by EKS control plane and nodes."
   type        = list(string)
-  default     = [] # Pass from VPC module in the stack.
+  default     = [] # Pass from VPC module at the stack layer.
 }
 
 variable "kms_key_arn" {
