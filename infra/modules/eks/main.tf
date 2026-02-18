@@ -12,8 +12,8 @@ module "eks" {
   # - Private = true lets you manage from EC2 in the VPC (secure, what you use now).
   # - Public  = false keeps API private. Set true if you want to access from internet.
   cluster_endpoint_private_access = true
-  cluster_endpoint_public_access  = false
-  # public_access_cidrs = ["<your.public.ip>/32"] # only if public access is enabled
+  cluster_endpoint_public_access  = true
+  public_access_cidrs = ["34.239.118.255/32"] # only if public access is enabled
 
   # IRSA (safe to leave on even if you don't use it immediately)
   enable_irsa = true
