@@ -1,48 +1,66 @@
-#############################################
-# EKS Module - Variables (NO ADD-ONS)
-#############################################
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 20.0"
 
-variable "cluster_name" {
-  description = "EKS cluster name."
-  type        = string
-  default     = "prod-eks"
-}
+  cluster_name    = var.cluster_name
+  cluster_version = var.kubernetes_version
 
-variable "kubernetes_version" {
-  description = "Kubernetes version."
-  type        = string
-  default     = "1.29"
-}
+  vpc_id     = var.vpc_id
+  subnet_ids = var.private_subnet_ids
 
-variable "vpc_id" {
-  description = "VPC ID where EKS will be created."
-  type        = string
-  default     = ""  # Pass from VPC module at the stack layer.
-}
+  # Endpoint access:
+  # - Private = true lets you manage from EC2 in the VPC (secure, what you use now).
+  # - Public  = false keeps API private. Set true if you want to access from internet.
+  cluster_endpoint_private_access = true
+  cluster_endpoint_public_access  = false
+  # public_access_cidrs = ["<your.public.ip>/32"] # only if public access is enabled
 
-variable "private_subnet_ids" {
-  description = "Private subnet IDs used by EKS control plane and nodes."
-  type        = list(string)
-  default     = []  # Pass from VPC module at the stack layer.
-}
+  # IRSA (safe to leave on even if you don't use it immediately)
+  enable_irsa = true
 
-variable "kms_key_arn" {
-  description = "Optional KMS key ARN for secrets encryption. Leave empty to disable."
-  type        = string
-  default     = ""
-}
+  # ----- Secrets encryption (KMS) -----
+  # Minimal cost: don't create a CMK and don't enable encryption config.
+  create_kms_key            = false
+  cluster_encryption_config = var.kms_key_arn != "" ? [{
+    resources        = ["secrets"]
+    provider_key_arn = var.kms_key_arn
+  }] : []
 
-variable "admin_role_arn" {
-  description = "Optional IAM role ARN to grant cluster-admin (via access entries)."
-  type        = string
-  default     = ""
-}
+  # Control plane logs (low cost, useful for troubleshooting)
+  cluster_enabled_log_types              = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  cloudwatch_log_group_retention_in_days = 30
 
-variable "tags" {
-  description = "Common tags for EKS resources."
-  type        = map(string)
-  default = {
-    Environment = "prod"
-    Platform    = "eks"
+  # One small node group (minimal cost)
+  eks_managed_node_groups = {
+    general = {
+      min_size       = 1
+      max_size       = 2
+      desired_size   = 1
+      instance_types = ["t3.small"]
+      capacity_type  = "ON_DEMAND"
+      labels         = { pool = "general" }
+    }
   }
+
+  # v20+ authentication/authorization
+  # Makes the cluster creator (your current CLI identity) a cluster-admin.
+  enable_cluster_creator_admin_permissions = true
+
+  # OPTIONAL: grant another IAM role admin access (remove this whole block if not needed)
+  # Only keep if var.admin_role_arn is set to a real role.
+  access_entries = length(var.admin_role_arn) > 0 ? {
+    admin = {
+      principal_arn = var.admin_role_arn
+      policy_associations = [{
+        policy_arn   = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+        access_scope = { type = "cluster", namespaces = null }
+      }]
+      kubernetes_groups = ["system:masters"]
+    }
+  } : {}
+
+  tags = var.tags
 }
+
+# Outputs are best kept in a separate outputs.tf at the module level;
+# if you already created that, don't duplicate them here.
