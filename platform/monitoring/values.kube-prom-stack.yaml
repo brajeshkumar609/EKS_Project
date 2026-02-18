@@ -1,0 +1,89 @@
+# ==========================
+# kube-prometheus-stack values (minimal)
+# ==========================
+
+# ---- Grafana (public access via Service: LoadBalancer) ----
+grafana:
+  enabled: true
+  adminUser: admin
+  adminPassword: "ChangeMeNow!"     # <-- change in Git later or override via --set
+  service:
+    type: LoadBalancer              # public URL from cloud LB; simplest option
+    port: 80
+    # Optional: restrict who can access (CIDRs). Uncomment to limit:
+    # loadBalancerSourceRanges:
+    #   - 0.0.0.0/0
+  persistence:
+    enabled: false                  # cheapest to start; enable later if needed
+  resources:
+    requests:
+      cpu: 100m
+      memory: 200Mi
+    limits:
+      cpu: 400m
+      memory: 600Mi
+
+# ---- Prometheus ----
+prometheus:
+  prometheusSpec:
+    retention: 5d                   # small retention for cost control
+    resources:
+      requests:
+        cpu: 200m
+        memory: 600Mi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+    storageSpec: {}                 # no PVC initially (cheapest)
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+# ---- Alertmanager ----
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 300m
+        memory: 512Mi
+
+# ---- Node exporter & kube-state-metrics (lightweight) ----
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 30m
+      memory: 50Mi
+    limits:
+      cpu: 150m
+      memory: 200Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 120Mi
+    limits:
+      cpu: 200m
+      memory: 300Mi
+
+# ---- Admission webhook: make first install reliable on small clusters ----
+prometheusOperator:
+  admissionWebhooks:
+    enabled: true
+    failurePolicy: Ignore            # do not block if webhook is not fully ready
+    patch:
+      enabled: true
+      image:
+        # pin a widely-available certgen image used also by ingress-nginx
+        registry: registry.k8s.io
+        repository: ingress-nginx/kube-webhook-certgen
+        tag: v1.4.4
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+        limits:
+          cpu: 100m
+          memory: 128Mi
