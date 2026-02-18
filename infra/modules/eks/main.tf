@@ -33,7 +33,7 @@ module "eks" {
   # One small node group (minimal cost)
   eks_managed_node_groups = {
     general = {
-      min_size       = 3
+      min_size       = 1
       max_size       = 4
       desired_size   = 3
       instance_types = ["t3.small"]
