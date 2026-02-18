@@ -52,11 +52,11 @@ spec:
     - name: node-alerts
       rules:
 
-        # Alert: Node CPU usage > 80% for 5 minutes
+        # Alert: Node CPU usage > 25% for 1 minutes
         - alert: NodeHighCPUUsage
           expr: |
-            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
-          for: 5m
+            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 25
+          for: 1m
           labels:
             severity: warning
           annotations:
@@ -66,8 +66,8 @@ spec:
         # Alert: Node CPU usage > 95% for 2 minutes (critical)
         - alert: NodeCriticalCPUUsage
           expr: |
-            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
-          for: 2m
+            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 25
+          for: 1m
           labels:
             severity: critical
           annotations:
@@ -77,8 +77,8 @@ spec:
         # Alert: Node Memory usage > 80%
         - alert: NodeHighMemoryUsage
           expr: |
-            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
-          for: 5m
+            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 25
+          for: 1m
           labels:
             severity: warning
           annotations:
@@ -88,8 +88,8 @@ spec:
         # Alert: Node Memory usage > 95% (critical)
         - alert: NodeCriticalMemoryUsage
           expr: |
-            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
-          for: 2m
+            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 25
+          for: 1m
           labels:
             severity: critical
           annotations:
@@ -99,8 +99,8 @@ spec:
         # Alert: Node disk usage > 85%
         - alert: NodeHighDiskUsage
           expr: |
-            (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 85
-          for: 5m
+            (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 25
+          for: 1m
           labels:
             severity: warning
           annotations:
