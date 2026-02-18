@@ -1,0 +1,108 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: eks-custom-alerts
+  namespace: monitoring
+  labels:
+    # These labels are required so kube-prometheus-stack picks up this rule
+    release: kube-prometheus-stack
+    app: kube-prometheus-stack
+spec:
+  groups:
+
+    # -------------------------------------------------------
+    # GROUP 1: Pod Health Alerts
+    # -------------------------------------------------------
+    - name: pod-alerts
+      rules:
+
+        # Alert: Pod is crash-looping
+        - alert: PodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total[5m]) * 60 > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod is crash looping"
+            description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} (container: {{ $labels.container }}) is restarting frequently. Restart rate: {{ $value | humanize }} per minute."
+
+        # Alert: Pod not in Running state for too long
+        - alert: PodNotRunning
+          expr: kube_pod_status_phase{phase!~"Running|Succeeded"} == 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod is not in Running state"
+            description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in {{ $labels.phase }} state for more than 10 minutes."
+
+        # Alert: Container restarted more than 5 times in last hour
+        - alert: PodRestartingTooMuch
+          expr: increase(kube_pod_container_status_restarts_total[1h]) > 5
+          for: 0m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod restarted too many times"
+            description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has restarted {{ $value | humanize }} times in the last hour."
+
+    # -------------------------------------------------------
+    # GROUP 2: Node CPU & Memory Alerts
+    # -------------------------------------------------------
+    - name: node-alerts
+      rules:
+
+        # Alert: Node CPU usage > 80% for 5 minutes
+        - alert: NodeHighCPUUsage
+          expr: |
+            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node CPU usage is high"
+            description: "Node {{ $labels.instance }} CPU usage is above 80%. Current value: {{ $value | humanize }}%."
+
+        # Alert: Node CPU usage > 95% for 2 minutes (critical)
+        - alert: NodeCriticalCPUUsage
+          expr: |
+            100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node CPU usage is critically high"
+            description: "Node {{ $labels.instance }} CPU usage is above 95%. Current value: {{ $value | humanize }}%."
+
+        # Alert: Node Memory usage > 80%
+        - alert: NodeHighMemoryUsage
+          expr: |
+            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node Memory usage is high"
+            description: "Node {{ $labels.instance }} memory usage is above 80%. Current value: {{ $value | humanize }}%."
+
+        # Alert: Node Memory usage > 95% (critical)
+        - alert: NodeCriticalMemoryUsage
+          expr: |
+            (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node Memory usage is critically high"
+            description: "Node {{ $labels.instance }} memory usage is above 95%. Current value: {{ $value | humanize }}%."
+
+        # Alert: Node disk usage > 85%
+        - alert: NodeHighDiskUsage
+          expr: |
+            (1 - (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"})) * 100 > 85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node disk usage is high"
+            description: "Node {{ $labels.instance }} disk usage on {{ $labels.mountpoint }} is above 85%. Current value: {{ $value | humanize }}%."
