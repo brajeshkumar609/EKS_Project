@@ -1,5 +1,5 @@
 #############################################
-# VPC Module - Outputs
+# VPC Module - Outputs (NO ADD-ONS)
 #############################################
 
 output "vpc_id" {
