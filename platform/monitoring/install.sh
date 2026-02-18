@@ -18,6 +18,8 @@ helm upgrade --install kube-prometheus-stack \
   -f platform/monitoring/values.kube-prom-stack.yaml \
   --wait --timeout 20m
 
+kubectl apply -f platform/monitoring/Alerts.yaml
+
 echo ""
 echo "Waiting for Grafana Service external address ..."
 kubectl -n monitoring get svc -w prometheus-grafana
