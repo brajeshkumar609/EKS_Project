@@ -1,5 +1,5 @@
 #############################################
-# Prod Stack - Outputs
+# Prod Stack - Outputs (NO ADD-ONS)
 #############################################
 
 # Network
@@ -14,7 +14,7 @@ output "private_subnet_ids" {
 }
 
 output "public_subnet_ids" {
-  description = "Public subnet IDs (e.g., for ALB)."
+  description = "Public subnet IDs (useful for testing/ALB if added later)."
   value       = module.vpc.public_subnets
 }
 
@@ -37,15 +37,4 @@ output "eks_oidc_provider_arn" {
 output "eks_node_group_names" {
   description = "Names of EKS managed node groups."
   value       = try(module.eks.managed_node_group_names, [])
-}
-
-# Add-ons (if you surface them from the addons module)
-output "aws_lbc_irsa_role_arn" {
-  description = "IRSA role ARN for AWS Load Balancer Controller."
-  value       = try(module.addons.aws_load_balancer_controller_role_arn, null)
-}
-
-output "aws_lbc_release_name" {
-  description = "Helm release name for AWS Load Balancer Controller."
-  value       = try(module.addons.aws_load_balancer_controller_release, null)
 }
