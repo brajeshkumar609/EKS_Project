@@ -13,7 +13,7 @@ module "eks" {
   # - Public  = false keeps API private. Set true if you want to access from internet.
   cluster_endpoint_private_access = true
   cluster_endpoint_public_access  = true
-  public_access_cidrs = ["34.239.118.255/32"] # only if public access is enabled
+  cluster_endpoint_public_access_cidrs = ["34.239.118.255/32"] # only if public access is enabled
 
   # IRSA (safe to leave on even if you don't use it immediately)
   enable_irsa = true
