@@ -1,5 +1,5 @@
 #############################################
-# Prod Stack - Variables
+# Prod Stack - Variables (NO ADD-ONS)
 #############################################
 
 variable "cluster_name" {
