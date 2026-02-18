@@ -1,20 +1,17 @@
-# ==========================
+# ==========================================================
 # kube-prometheus-stack values (minimal)
-# ==========================
+# ==========================================================
 
 # ---- Grafana (public access via Service: LoadBalancer) ----
 grafana:
   enabled: true
   adminUser: admin
-  adminPassword: "ChangeMeNow!"     # <-- change in Git later or override via --set
+  adminPassword: "ChangeMeNow!"
   service:
-    type: LoadBalancer              # public URL from cloud LB; simplest option
+    type: LoadBalancer
     port: 80
-    # Optional: restrict who can access (CIDRs). Uncomment to limit:
-    # loadBalancerSourceRanges:
-    #   - 0.0.0.0/0
   persistence:
-    enabled: false                  # cheapest to start; enable later if needed
+    enabled: false
   resources:
     requests:
       cpu: 100m
@@ -23,67 +20,91 @@ grafana:
       cpu: 400m
       memory: 600Mi
 
-# ---- Prometheus ----
-prometheus:
-  prometheusSpec:
-    retention: 5d                   # small retention for cost control
-    resources:
-      requests:
-        cpu: 200m
-        memory: 600Mi
-      limits:
-        cpu: 1000m
-        memory: 2Gi
-    storageSpec: {}                 # no PVC initially (cheapest)
-    podMonitorSelectorNilUsesHelmValues: false
-    serviceMonitorSelectorNilUsesHelmValues: false
-
-# ---- Alertmanager ----
+# ---- Alertmanager with Slack ----
 alertmanager:
+  enabled: true
+  config:
+    global:
+      resolve_timeout: 5m
+      slack_api_url: 'WEBHOOK_FROM_K8S_SECRET'
+    route:
+      group_by: ['alertname', 'namespace', 'severity']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'slack-alerts'
+      routes:
+        - match:
+            severity: critical
+          receiver: 'slack-alerts'
+          repeat_interval: 1h
+        - match:
+            severity: warning
+          receiver: 'slack-alerts'
+          repeat_interval: 6h
+    receivers:
+      - name: 'slack-alerts'
+        slack_configs:
+          - channel: '#eks-graphana'
+            send_resolved: true
+            icon_emoji: ':bell:'
+            username: 'EKS AlertManager'
+            title: '{{ if eq .Status "firing" }} FIRING{{ else }} RESOLVED{{ end }} - {{ .CommonLabels.alertname }}'
+            text: |
+              *Alert:* {{ .CommonLabels.alertname }}
+              *Severity:* {{ .CommonLabels.severity }}
+              *Namespace:* {{ .CommonLabels.namespace }}
+              {{ range .Alerts }}
+              *Summary:* {{ .Annotations.summary }}
+              *Description:* {{ .Annotations.description }}
+              {{ end }}
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'namespace']
   alertmanagerSpec:
     resources:
       requests:
-        cpu: 50m
-        memory: 128Mi
+        cpu: 100m
+        memory: 100Mi
       limits:
-        cpu: 300m
-        memory: 512Mi
+        cpu: 200m
+        memory: 200Mi
 
-# ---- Node exporter & kube-state-metrics (lightweight) ----
-prometheus-node-exporter:
+# ---- Prometheus settings ----
+prometheus:
+  enabled: true
+  prometheusSpec:
+    retention: 7d
+    resources:
+      requests:
+        cpu: 200m
+        memory: 400Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    ruleSelector:
+      matchLabels:
+        release: kube-prometheus-stack
+    ruleSelectorNilUsesHelmValues: false
+
+# ---- Prometheus Operator ----
+prometheusOperator:
+  enabled: true
   resources:
     requests:
-      cpu: 30m
-      memory: 50Mi
-    limits:
-      cpu: 150m
-      memory: 200Mi
-
-kube-state-metrics:
-  resources:
-    requests:
-      cpu: 50m
-      memory: 120Mi
+      cpu: 100m
+      memory: 100Mi
     limits:
       cpu: 200m
-      memory: 300Mi
+      memory: 200Mi
 
-# ---- Admission webhook: make first install reliable on small clusters ----
-prometheusOperator:
-  admissionWebhooks:
-    enabled: true
-    failurePolicy: Ignore            # do not block if webhook is not fully ready
-    patch:
-      enabled: true
-      image:
-        # pin a widely-available certgen image used also by ingress-nginx
-        registry: registry.k8s.io
-        repository: ingress-nginx/kube-webhook-certgen
-        tag: v1.4.4
-      resources:
-        requests:
-          cpu: 10m
-          memory: 32Mi
-        limits:
-          cpu: 100m
-          memory: 128Mi
+# ---- Node Exporter ----
+nodeExporter:
+  enabled: true
+
+# ---- Kube State Metrics ----
+kubeStateMetrics:
+  enabled: true
