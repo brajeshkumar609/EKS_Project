@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: web
-          image: brajeshkumar609/devops-node-app:v1
+          image: brajeshkumar609/web-app:latest
           ports: [{ containerPort: 3000 }]
           resources:
             requests: { cpu: "100m", memory: "128Mi" }
